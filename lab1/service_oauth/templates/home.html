@@ -1,0 +1,12 @@
+<html>
+  <head>
+    <title>BMSTU DDPS lab1</title>
+  </head>
+  <body>
+    <p><a href="/logout"><button>Logout</button></a></p>
+    <h1>User images</h1>
+    {% for img in images %}
+      <img style="width:200px" src="{{ img }}">
+    {% endfor %}
+  </body>
+</html>
