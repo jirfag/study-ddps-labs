@@ -3,10 +3,19 @@
 {% block content %}
 
 <h1>My client applications</h1>
-<ul>
+<table class="table">
+  <thead>
+    <tr>
+      <td>Name</td>
+      <td>Secret</td>
+      <td>Redirect domain</td>
+    </tr>
+  </thead>
+  <tbody>
 {% for app in apps %}
-  <li>{{ app.name }}</li>
+  <tr><td>{{ app.name }}</td><td><pre>{{ app.secret }}</pre></td><td>{{ app.redirect_domain }}</td></tr>
 {% endfor %}
-</ul>
+  </tbody>
+</table>
 
 {% endblock %}

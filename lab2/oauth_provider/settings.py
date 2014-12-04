@@ -90,3 +90,4 @@ STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login'
 DEFAULT_LOGIN_REDIRECT_URL = '/'
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
+AUTH_USER_MODEL = 'oauth_provider.User'
