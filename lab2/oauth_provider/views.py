@@ -14,7 +14,6 @@ def get_params_or_400(req, *param_names):
         values.append(v)
     return values
 
-@require_http_methods(["GET", "POST"])
 @login_required
 def auth(r):
     client_id, redirect_uri, response_type = get_params_or_400(req, 'client_id', 'redirect_uri', 'response_type')
@@ -42,3 +41,7 @@ def auth(r):
 
 def get_token(req):
     pass
+
+@login_required
+def index(r):
+    return render_to_response('oauth_provider/index.html', {'apps': ClientApp.objects.all()})
