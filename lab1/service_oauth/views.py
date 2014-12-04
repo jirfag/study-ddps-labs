@@ -28,7 +28,11 @@ def home(req):
         return redirect('login')
 
     print('oauth_access_token is %s' % req.session['oauth_access_token'])
-    user_images = get_user_images(req)
+    try:
+        user_images = get_user_images(req)
+    except:
+        print('token expired, logouting')
+        return logout(req)
     print('user images are %s' % user_images)
     return render_to_response('home.html', {'images': user_images})
 
