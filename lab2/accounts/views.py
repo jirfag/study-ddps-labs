@@ -13,7 +13,14 @@ def login(r):
         return render(r, 'accounts/login.html', {'form': form})
 
     django_login(r, form.user)
-    return redirect(r.GET.get('next', DEFAULT_LOGIN_REDIRECT_URL))
+    redir_url = r.GET.get('next', DEFAULT_LOGIN_REDIRECT_URL)
+    print('redirecting to {} after successfull login'.format(redir_url))
+    return redirect(redir_url)
+
+def logout(r):
+    from django.contrib.auth import logout
+    logout(r)
+    return redirect('login')
 
 @csrf_exempt
 def reg(r):

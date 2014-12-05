@@ -1,5 +1,5 @@
 from django.db import models
-from .settings import AUTH_USER_MODEL, ACCESS_TOKEN_EXPIRATION_TIME
+from .settings import AUTH_USER_MODEL, ACCESS_TOKEN_EXPIRATION_TIME, AUTHORIZATION_CODE_EXPIRATION_TIME
 from datetime import datetime
 
 def generate_secret_code():
@@ -28,13 +28,18 @@ class SecretCode(models.Model):
     def save(self, *args, **kwargs):
         self.value = generate_secret_code()
         super(SecretCode, self).save(*args, **kwargs)
+    def has_expired(self):
+        return (datetime.now() - self.creation_date).total_seconds() >= self.get_expiration_time()
 
 class AccessToken(SecretCode):
-    def has_expired(self):
-        return (datetime.now() - self.creation_date).total_seconds() >= ACCESS_TOKEN_EXPIRATION_TIME
+    def get_expiration_time(self):
+        return ACCESS_TOKEN_EXPIRATION_TIME
 
 class RefreshToken(SecretCode):
     pass
 
 class AuthorizationCode(SecretCode):
-    pass
+    redirect_uri = models.URLField(max_length=1024)
+
+    def get_expiration_time(self):
+        return AUTHORIZATION_CODE_EXPIRATION_TIME

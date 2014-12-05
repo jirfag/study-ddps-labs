@@ -84,7 +84,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -101,7 +101,7 @@ DEFAULT_LOGIN_REDIRECT_URL = '/'
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 AUTH_USER_MODEL = 'accounts.User'
 ACCESS_TOKEN_EXPIRATION_TIME = 180 #secs
-
+AUTHORIZATION_CODE_EXPIRATION_TIME = 180 #secs
 
 LOGGING = {
   'version': 1,
