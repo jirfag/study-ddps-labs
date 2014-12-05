@@ -2,21 +2,23 @@ from django.http.response import Http404, HttpResponse, HttpResponseBadRequest, 
 from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from .models import ClientApp, AccessToken, RefreshToken, AuthorizationCode
 from urllib.parse import urlparse
 
-def get_params_or_400(req, *param_names):
+def get_params_or_404(r, *param_names):
     values = []
     for p in param_names:
-        v = req.GET.get(p)
+        v = r.GET.get(p)
         if v is None:
-            raise HttpResponseBadRequest()
+            raise Http404
         values.append(v)
     return values
 
+@csrf_exempt
 @login_required
 def auth(r):
-    client_id, redirect_uri, response_type = get_params_or_400(req, 'client_id', 'redirect_uri', 'response_type')
+    client_id, redirect_uri, response_type = get_params_or_404(r, 'client_id', 'redirect_uri', 'response_type')
     if response_type != 'code':
         return HttpResponseBadRequest()
 
@@ -25,8 +27,8 @@ def auth(r):
         print('invalid domain')
         return HttpResponseBadRequest()
 
-    if r.GET:
-        return render(r, 'ask_access.html', {'app_name': app.name})
+    if r.method == 'GET':
+        return render(r, 'oauth_provider/ask_access.html', {'app_name': app.name})
 
     allow = r.POST.get('allow_access')
     if allow is None:

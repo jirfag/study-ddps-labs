@@ -7,6 +7,7 @@ urlpatterns = patterns('',
     url(r'^oauth2/token', 'oauth_provider.views.get_token', name='token'),
 
     url(r'^accounts/', include('accounts.urls')),
+
     url(r'^api/', include('api.urls')),
 
     url(r'^admin/', include(admin.site.urls)),
