@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'oauth_provider',
     'accounts',
+    'api',
     'bootstrap3',
 )
 

@@ -6,14 +6,15 @@
 <table class="table">
   <thead>
     <tr>
-      <td>Name</td>
-      <td>Secret</td>
+      <td>App name</td>
+      <td>Client id</td>
+      <td>Client secret</td>
       <td>Redirect domain</td>
     </tr>
   </thead>
   <tbody>
 {% for app in apps %}
-  <tr><td>{{ app.name }}</td><td><pre>{{ app.secret }}</pre></td><td>{{ app.redirect_domain }}</td></tr>
+  <tr><td>{{ app.name }}</td><td>{{ app.pk }}</td><td><pre>{{ app.secret }}</pre></td><td>{{ app.redirect_domain }}</td></tr>
 {% endfor %}
   </tbody>
 </table>
