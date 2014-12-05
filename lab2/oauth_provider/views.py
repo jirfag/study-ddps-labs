@@ -1,5 +1,5 @@
 from django.http.response import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
-from django.shortcuts import get_object_or_404, redirect, render_to_response
+from django.shortcuts import get_object_or_404, redirect, render_to_response, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from .models import ClientApp, AccessToken, RefreshToken, AuthorizationCode
@@ -26,7 +26,7 @@ def auth(r):
         return HttpResponseBadRequest()
 
     if r.GET:
-        return render_to_response('ask_access.html', {'app_name': app.name})
+        return render(r, 'ask_access.html', {'app_name': app.name})
 
     allow = r.POST.get('allow_access')
     if allow is None:
@@ -44,4 +44,4 @@ def get_token(req):
 
 @login_required
 def index(r):
-    return render_to_response('oauth_provider/index.html', {'apps': ClientApp.objects.all()})
+    return render(r, 'oauth_provider/index.html', {'apps': ClientApp.objects.all()})

@@ -1,6 +1,5 @@
 from django.db import models
 from .settings import AUTH_USER_MODEL
-from django.contrib.auth.models import AbstractUser
 
 def generate_secret_code():
     from uuid import uuid4
@@ -37,6 +36,3 @@ class RefreshToken(SecretCode):
 
 class AuthorizationCode(SecretCode):
     pass
-
-class User(AbstractUser):
-    phone = models.CharField(max_length=16)

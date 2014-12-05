@@ -88,6 +88,35 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
 LOGIN_URL = '/accounts/login'
+AFTER_REG_REDIRECT_URL = '/'
 DEFAULT_LOGIN_REDIRECT_URL = '/'
+
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
-AUTH_USER_MODEL = 'oauth_provider.User'
+AUTH_USER_MODEL = 'accounts.User'
+LOGGING = {
+  'version': 1,
+  'formatters': {
+    'simple': {
+      'format': '%(levelname)s %(message)s'
+    },
+  },
+  'handlers': {
+    'console':{
+      'level': 'DEBUG',
+      'class': 'logging.StreamHandler',
+      'formatter': 'simple'
+    },
+  },
+  'loggers': {
+    'django': {
+      'handlers': ['console'],
+      'propagate': True,
+      'level': 'DEBUG',
+    },
+    'django.request': {
+      'handlers': ['console'],
+      'level': 'DEBUG',
+      'propagate': False,
+    },
+  }
+}
