@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Allow access to all your profile's data to application {{ app_name }}?</h2>
+<form role="form" method="POST">
+    <input type="hidden" name="allow_access" value="1" id="allow_access">
+    <button type="submit" class="btn btn-default" onclick="$('#allow_access').val('1');">Allow</button>
+    <button type="submit" class="btn btn-default" onclick="$('#allow_access').val('0');">Disallow</button>
+</form>
+{% endblock %}
