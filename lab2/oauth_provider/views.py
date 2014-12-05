@@ -43,6 +43,18 @@ def auth(r):
     code = AuthorizationCode.objects.create(app=app, user=r.user, redirect_uri=redirect_uri)
     return redirect('{}?code={}{}'.format(redirect_uri, code.value, state))
 
+def validate_oauth_data(token, client_id, client_secret):
+    app = token.app
+    if client_id != app.pk:
+        print('invalid client_id')
+        raise Http404
+    if client_secret != app.secret:
+        print('invalid client secret')
+        raise Http404
+    if token.has_expired():
+        print('code/token has expired')
+        raise Http404
+
 @csrf_exempt
 def get_token(r):
     grant_type = get_params_or_404(r.POST, 'grant_type')
@@ -54,31 +66,30 @@ def get_token(r):
             print('no such code')
             raise Http404
 
-        app = auth_code.app
-        if int(client_id) != app.pk:
-            print('invalid client_id')
-            raise Http404
-        if client_secret != app.secret:
-            print('invalid client secret')
-            raise Http404
+        validate_oauth_data(auth_code, int(client_id), client_secret)
         if redirect_uri != auth_code.redirect_uri:
             print('redirect uris dont match')
             raise Http404
-        if auth_code.has_expired():
-            print('auth code has expired')
+        refresh_token = RefreshToken.objects.create(app=auth_code.app, user=auth_code.user)
+    elif grant_type == 'refresh_token':
+        refresh_token_value = get_params_or_404(r.POST, 'refresh_token')
+        try:
+            refresh_token = RefreshToken.objects.get(value=refresh_token_value)
+        except RefreshToken.DoesNotExist:
             raise Http404
-
-        access_token = AccessToken.objects.create(app=app, user=auth_code.user)
-        refresh_token = RefreshToken.objects.create(app=app, user=auth_code.user)
-        return JsonResponse({
-            'access_token': access_token.value,
-            'token_type': 'bearer',
-            'expires_in': access_token.get_expiration_time(),
-            'refresh_token': refresh_token.value,
-        })
+        client_id, client_secret = get_params_or_404(r.POST, 'client_id', 'client_secret')
+        validate_oauth_data(refresh_token, int(client_id), client_secret)
     else:
-        print('unknown grant_type')
+        print('invalid grant_type')
         raise Http404
+
+    access_token = AccessToken.objects.create(app=refresh_token.app, user=refresh_token.user)
+    return JsonResponse({
+        'access_token': access_token.value,
+        'token_type': 'bearer',
+        'expires_in': access_token.get_expiration_time(),
+        'refresh_token': refresh_token.value,
+    })
 
 @login_required
 def index(r):
