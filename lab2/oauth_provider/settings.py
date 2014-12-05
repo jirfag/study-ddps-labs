@@ -50,6 +50,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'oauth_provider.auth_middleware.OauthMiddleware',
+)
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'oauth_provider.auth_backend.OauthBackend',
 )
 
 ROOT_URLCONF = 'oauth_provider.urls'
@@ -94,6 +100,9 @@ DEFAULT_LOGIN_REDIRECT_URL = '/'
 
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 AUTH_USER_MODEL = 'accounts.User'
+ACCESS_TOKEN_EXPIRATION_TIME = 180 #secs
+
+
 LOGGING = {
   'version': 1,
   'formatters': {

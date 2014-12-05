@@ -1,5 +1,6 @@
 from django.db import models
-from .settings import AUTH_USER_MODEL
+from .settings import AUTH_USER_MODEL, ACCESS_TOKEN_EXPIRATION_TIME
+from datetime import datetime
 
 def generate_secret_code():
     from uuid import uuid4
@@ -29,7 +30,8 @@ class SecretCode(models.Model):
         super(SecretCode, self).save(*args, **kwargs)
 
 class AccessToken(SecretCode):
-    pass
+    def has_expired(self):
+        return (datetime.now() - self.creation_date).total_seconds() >= ACCESS_TOKEN_EXPIRATION_TIME
 
 class RefreshToken(SecretCode):
     pass
