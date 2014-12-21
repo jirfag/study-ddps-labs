@@ -34,19 +34,19 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
+#    'django.contrib.sessions',
+#    'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrap3',
 )
 
 MIDDLEWARE_CLASSES = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
 #    'django.middleware.csrf.CsrfViewMiddleware',
 #    'django.contrib.auth.middleware.AuthenticationMiddleware',
 #    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+#    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
@@ -116,4 +116,6 @@ LOGGING = {
 }
 
 SESSION_HOST = 'http://127.0.0.1:8001'
+IMAGES_BACKEND_HOST = 'http://127.0.0.1:8002'
+TAGS_BACKEND_HOST = 'http://127.0.0.1:8003'
 DEFAULT_AFTER_LOGIN_REDIRECT_URL = 'home'

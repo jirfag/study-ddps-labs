@@ -8,32 +8,33 @@ def is_session_valid(r):
     token, user_id = r.COOKIES.get('token'), r.COOKIES.get('user_id')
     if not token or not user_id:
         print('no token and user_id in cookies')
-        return False
+        return None
 
     try:
         user_id = int(user_id)
     except ValueError:
         print('invalid user_id')
-        return False
+        return None
 
     try:
         auth = ClientAuthorization.objects.get(token=token)
     except ClientAuthorization.DoesNotExist:
         print('no authorization with such token {}'.format(token))
-        return False
+        return None
 
     if auth.has_expired():
         print('auth has expired')
-        return False
+        return None
     if auth.user.pk != user_id:
         print('detected malformed request of session {} for user {}'.format(token, auth.user.pk))
-        return False
+        return None
     print('auth with token {} and user_id {} is valid'.format(token, user_id))
-    return True
+    return auth.user
 
 def check_session(r):
-    if is_session_valid(r):
-        return JsonResponse({'status': 'valid'})
+    user = is_session_valid(r)
+    if user is not None:
+        return JsonResponse({'status': 'valid', 'user': {'id': user.pk, 'name': user.first_name}})
     else:
         print('auth is invalid')
         return JsonResponse({'status': 'invalid'}, status=403)

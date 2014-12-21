@@ -8,6 +8,19 @@ from .forms import LoginForm
 from http import cookies
 from .settings import SESSION_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
 
+class User(object):
+    def __init__(self, user_id, name):
+        self.user_id = user_id
+        self.name = name
+    def is_authenticated(self):
+        return True
+
+class AnonymousUser(User):
+    def __init__(self):
+        super(AnonymousUser, self).__init__(None, None)
+    def is_authenticated(self):
+        return False
+
 def make_api_request(url, method='GET', fields=None, headers=None):
     fields = fields or {}
     headers = headers or {}
@@ -28,12 +41,15 @@ def make_request_to_session(uri, method='GET', fields=None, headers=None):
 
 def check_is_authenticated(r):
     resp = make_request_to_session('/check_session', headers={'Cookie': r.META.get('HTTP_COOKIE', '')})
+    r._user = AnonymousUser()
     if resp is None:
         print('cant make request to session')
-        return None
+        return False
     if resp.status != 200:
         print('session is invalid, sess status is {}'.format(resp.status))
         return False
+    udata = json.loads(resp.data.decode('utf-8'))['user']
+    r._user = User(udata['id'], udata['name'])
     return True
 
 def login_required(view):
@@ -41,13 +57,12 @@ def login_required(view):
     def wrapper(r, *args, **kwargs):
         if not check_is_authenticated(r):
             return redirect('login')
-
         return view(r, *args, **kwargs)
     return wrapper
 
 @login_required
 def home(r):
-    return render(r, 'frontend/home.html')
+    return render(r, 'frontend/home.html', {'user': r._user})
 
 def morsel_to_django_cookie(m):
     r = {}
