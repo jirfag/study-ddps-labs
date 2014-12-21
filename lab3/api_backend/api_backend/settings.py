@@ -1,5 +1,5 @@
 """
-Django settings for images_backend project.
+Django settings for api_backend project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.7/topics/settings/
@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'h&(+cs8kb(+ik*fuel#$4@bfjwf#8l6s0%_t$)(hu&m1nfal@m'
+SECRET_KEY = 'hbe_+ef4wb(jvw=l9v%l5e12nsyu+%^civk4bsf$iyxemg+lv-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -48,9 +48,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'images_backend.urls'
+ROOT_URLCONF = 'api_backend.urls'
 
-WSGI_APPLICATION = 'images_backend.wsgi.application'
+WSGI_APPLICATION = 'api_backend.wsgi.application'
 
 
 # Database
