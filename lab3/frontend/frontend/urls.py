@@ -9,5 +9,6 @@ urlpatterns = patterns('',
     url(r'^$', 'frontend.views.home', name='home'),
     url(r'^login$', 'frontend.views.login', name='login'),
     url(r'^logout$', 'frontend.views.logout', name='logout'),
+    url(r'^images/all$', 'frontend.views.all_images', name='all_images'),
     url(r'^admin/', include(admin.site.urls)),
 )

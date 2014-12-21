@@ -29,17 +29,16 @@ def is_session_valid(r):
         print('detected malformed request of session {} for user {}'.format(token, auth.user.pk))
         return None
     print('auth with token {} and user_id {} is valid'.format(token, user_id))
-    return auth.user
+    return auth
 
 def check_session(r):
-    user = is_session_valid(r)
-    if user is not None:
-        return JsonResponse({'status': 'valid', 'user': {'id': user.pk, 'name': user.first_name}})
+    atuh = is_session_valid(r)
+    if auth is not None:
+        return JsonResponse({'status': 'valid', 'user': {'id': auth.user.pk, 'name': auth.user.first_name}})
     else:
         print('auth is invalid')
         return JsonResponse({'status': 'invalid'}, status=403)
 
-@csrf_exempt
 def authorize(r):
     username, password = r.POST['username'], r.POST['password']
     user = authenticate(username=username, password=password)
@@ -51,3 +50,11 @@ def authorize(r):
     resp.set_cookie('user_id', user.pk)
     resp.set_cookie('token', auth.token)
     return resp
+
+def delete_session(r):
+    auth = is_session_valid(r)
+    if auth is None:
+        print('invalid session, cant delete it')
+        return JsonResponse({'session': 'invalid'}, status=403)
+    auth.delete()
+    return JsonResponse({'status': 'ok'})

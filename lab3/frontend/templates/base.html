@@ -20,12 +20,19 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
+      <a class="navbar-brand" href="{% url 'home' %}">Home</a>
     </div>
 
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href="#">All Images</a></li>
+        <li><a href="#">My Images</a></li>
+        <li><a href="#">All Tags</a></li>
+      </ul>
+
       <ul class="nav navbar-nav navbar-right">
         {% if user.is_authenticated %}
-        <li><a href="#">You are logged in as <b>{{ user.first_name }}</b></a></li>
+        <li><a href="#">You are logged in as <b>{{ user.name }}</b></a></li>
         {% else %}
         <li><a href="{% url 'login' %}">Login</a></li>
         {% endif %}

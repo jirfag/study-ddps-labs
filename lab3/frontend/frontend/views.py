@@ -6,7 +6,7 @@ import urllib3
 import json
 from .forms import LoginForm
 from http import cookies
-from .settings import SESSION_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
+from .settings import SESSION_HOST, IMAGES_BACKEND_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
 
 class User(object):
     def __init__(self, user_id, name):
@@ -39,8 +39,15 @@ def make_api_request(url, method='GET', fields=None, headers=None):
 def make_request_to_session(uri, method='GET', fields=None, headers=None):
     return make_api_request(SESSION_HOST + uri, method=method, fields=fields, headers=headers)
 
+def make_request_to_images_backend(uri, method='GET', fields=None, headers=None):
+    resp = make_api_request(IMAGES_BACKEND_HOST + uri, method=method, fields=fields, headers=headers)
+    if resp:
+        return json.loads(resp.data)
+    else:
+        return None
+
 def check_is_authenticated(r):
-    resp = make_request_to_session('/check_session', headers={'Cookie': r.META.get('HTTP_COOKIE', '')})
+    resp = make_request_to_session('/session/check', headers={'Cookie': r.META.get('HTTP_COOKIE', '')})
     r._user = AnonymousUser()
     if resp is None:
         print('cant make request to session')
@@ -52,15 +59,22 @@ def check_is_authenticated(r):
     r._user = User(udata['id'], udata['name'])
     return True
 
+def check_auth(view):
+    @wraps(view)
+    def wrapper(r, *args, **kwargs):
+        check_is_authenticated(r)
+        return view(r, *args, **kwargs)
+    return wrapper
+
 def login_required(view):
     @wraps(view)
     def wrapper(r, *args, **kwargs):
-        if not check_is_authenticated(r):
+        if not r._user.is_authenticated():
             return redirect('login')
         return view(r, *args, **kwargs)
     return wrapper
 
-@login_required
+@check_auth
 def home(r):
     return render(r, 'frontend/home.html', {'user': r._user})
 
@@ -70,7 +84,7 @@ def morsel_to_django_cookie(m):
         r['max-age'] = float(m['max-age'])
     return r
 
-@csrf_exempt
+@check_auth
 def login(r):
     form = LoginForm(r.POST or None)
     if r.method == 'GET':
@@ -99,6 +113,11 @@ def login(r):
     return resp
 
 def logout(r):
-    from django.contrib.auth import logout
-    logout(r)
-    return redirect('login')
+    make_request_to_session('/session/delete', method='DELETE')
+    return redirect('home')
+
+@check_auth
+def all_images(r):
+    page = r.GET.get('page', 1)
+    resp = make_request_to_images_backend('/images', fields={'page': page})
+    return render(r, 'frontend/images_list.html', {'images': resp['images'], 'pages_count': resp['pages_count']})
