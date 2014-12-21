@@ -6,10 +6,7 @@ import urllib3
 import json
 from .forms import LoginForm
 from http import cookies
-
-SESSION_HOST = 'http://127.0.0.1:8001'
-DEFAULT_LOGIN_REDIRECT_URL = 'login'
-DEFAULT_AFTER_LOGIN_REDIRECT_URL = 'home'
+from .settings import SESSION_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
 
 def make_api_request(url, method='GET', fields=None, headers=None):
     fields = fields or {}
@@ -30,8 +27,7 @@ def make_request_to_session(uri, method='GET', fields=None, headers=None):
     return make_api_request(SESSION_HOST + uri, method=method, fields=fields, headers=headers)
 
 def check_is_authenticated(r):
-    assert not r.user.is_authenticated()
-    resp = make_request_to_session('/check_session', headers={'Cookie': r.META['HTTP_COOKIE']})
+    resp = make_request_to_session('/check_session', headers={'Cookie': r.META.get('HTTP_COOKIE', '')})
     if resp is None:
         print('cant make request to session')
         return None
@@ -45,6 +41,7 @@ def login_required(view):
     def wrapper(r, *args, **kwargs):
         if not check_is_authenticated(r):
             return redirect('login')
+
         return view(r, *args, **kwargs)
     return wrapper
 
@@ -56,7 +53,6 @@ def morsel_to_django_cookie(m):
     r = {}
     if m['max-age']:
         r['max-age'] = float(m['max-age'])
-    r['path'] = m['path']
     return r
 
 @csrf_exempt
