@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ image.name }}</h2>
+<img src="{{ image.url }}" style="height:300px;">
+
+<h3>Date created</h3>
+{{ image.creation_date }}
+
+<h3>Description</h3>
+{{ image.description }}
+
+<h3>Tags</h3>
+{% for tag in image.tags %}
+    <span class="label label-primary">{{ tag.name }}</span>
+{% endfor %}
+
+<h3>Actions</h3>
+<form action="{% url 'image_delete' image_id=image.id %}" method="POST">
+    <button class="btn btn-danger" type="submit">Delete image</button>
+</form>
+{% endblock %}

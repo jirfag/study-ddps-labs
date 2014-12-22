@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <table class="table table-striped">
+      <thead><th>Image</th><th>Name</th></thead>
+      <tbody>
+    {% for image in images %}
+      <tr>
+        <td><a href="{% url 'image' image_id=image.id %}" target="_blank"><img src="{{ image.url }}" style="height:100px;"></a></td>
+        <td>{{ image.name }}</td>
+      </tr>
+    {% endfor %}
+      </tbody>
+    </table>
+
+<nav>
+  <ul class="pager">
+{% if page > 1 %}
+    <li><a href="{% url 'all_images' %}?page={{ page|add:"-1" }}">Previous</a></li>
+{% endif %}
+{% if page != pages_count %}
+    <li><a href="{% url 'all_images' %}?page={{ page|add:"1" }}">Next</a></li>
+{% endif %}
+  </ul>
+</nav>
+{% endblock %}
