@@ -32,7 +32,7 @@ def is_session_valid(r):
     return auth
 
 def check_session(r):
-    atuh = is_session_valid(r)
+    auth = is_session_valid(r)
     if auth is not None:
         return JsonResponse({'status': 'valid', 'user': {'id': auth.user.pk, 'name': auth.user.first_name}})
     else:

@@ -2,14 +2,15 @@ from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.template import defaultfilters
 from functools import wraps
 from django import get_version
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.csrf import csrf_exempt
-from accounts.models import User
-from api.models import Image, Tag
-from oauth_provider.settings import IMAGES_PER_PAGE, TAGS_PER_PAGE
+from api_backend.models import Image, Tag
+from .settings import IMAGES_PER_PAGE, TAGS_PER_PAGE
 import json
+import math
 
 def jsonify(view):
     @wraps(view)
@@ -18,6 +19,8 @@ def jsonify(view):
     return wrapper
 
 def paginate(r, objects, objects_per_page):
+    if r.GET.get('all') == '1':
+        return objects
     paginator = Paginator(objects, objects_per_page)
     page = r.GET.get('page')
     try:
@@ -33,11 +36,12 @@ def paginate(r, objects, objects_per_page):
 @csrf_exempt
 def images(r):
     if r.method == 'GET':
+        print('images GET')
         return {'images': [{'name': im.name,
                             'id': im.pk,
                             'url': im.source
                            } for im in paginate(r, Image.objects.all(), IMAGES_PER_PAGE)],
-                'pages_count': Image.objects.count()
+                'pages_count': math.ceil(Image.objects.count() / IMAGES_PER_PAGE)
                }
     elif r.method == 'POST':
         try:
@@ -79,7 +83,7 @@ def image(r, image_id):
                 'id': im.pk,
                 'url': im.source,
                 'description': im.desc,
-                'creation_date': im.creation_date,
+                'creation_date': defaultfilters.date(im.creation_date),
                 'tags': [t.pk for t in im.tags.all()]}
     elif r.method == 'DELETE':
         im = get_object_or_404(Image, pk=image_id)
@@ -96,7 +100,7 @@ def tag(r, tag_id):
         return {'name': t.name,
                 'id': t.pk,
                 'description': t.desc,
-                'creation_date': t.creation_date,
+                'creation_date': defaultfilters.date(t.creation_date),
                 'images': [im.pk for im in t.image_set.all()]}
     elif r.method == 'DELETE':
         t = get_object_or_404(Tag, pk=tag_id)

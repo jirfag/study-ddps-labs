@@ -6,7 +6,7 @@ import urllib3
 import json
 from .forms import LoginForm
 from http import cookies
-from .settings import SESSION_HOST, IMAGES_BACKEND_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
+from .settings import SESSION_HOST, IMAGES_BACKEND_HOST, TAGS_BACKEND_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
 
 class User(object):
     def __init__(self, user_id, name):
@@ -41,10 +41,15 @@ def make_request_to_session(uri, method='GET', fields=None, headers=None):
 
 def make_request_to_images_backend(uri, method='GET', fields=None, headers=None):
     resp = make_api_request(IMAGES_BACKEND_HOST + uri, method=method, fields=fields, headers=headers)
-    if resp:
-        return json.loads(resp.data)
-    else:
+    if resp is None:
         return None
+    return json.loads(resp.data.decode('utf-8'))
+
+def make_request_to_tags_backend(uri, method='GET', fields=None, headers=None):
+    resp = make_api_request(TAGS_BACKEND_HOST + uri, method=method, fields=fields, headers=headers)
+    if resp is None:
+        return None
+    return json.loads(resp.data.decode('utf-8'))
 
 def check_is_authenticated(r):
     resp = make_request_to_session('/session/check', headers={'Cookie': r.META.get('HTTP_COOKIE', '')})
@@ -118,6 +123,20 @@ def logout(r):
 
 @check_auth
 def all_images(r):
-    page = r.GET.get('page', 1)
+    page = int(r.GET.get('page', '1'))
     resp = make_request_to_images_backend('/images', fields={'page': page})
-    return render(r, 'frontend/images_list.html', {'images': resp['images'], 'pages_count': resp['pages_count']})
+    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page}
+    print('context is {}'.format(c))
+    return render(r, 'frontend/images_list.html', c)
+
+@check_auth
+def image(r, image_id):
+    image = make_request_to_images_backend('/image/{}'.format(image_id))
+    if image['tags']:
+        all_tags = make_request_to_tags_backend('/tags', fields={'all': 1})['tags']
+        all_tags_dict = {tag['id']: tag for tag in all_tags}
+        image['tags'] = [all_tags_dict[tag_id] for tag_id in image['tags']]
+    return render(r, 'frontend/image.html', {'image': image})
+def image_delete(r, image_id):
+    make_request_to_images_backend('/image/{}'.format(image_id), method='DELETE')
+    return redirect('all_images')
