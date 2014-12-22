@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.template import defaultfilters
 from functools import wraps
@@ -77,8 +77,8 @@ def tags(r):
 @jsonify
 @csrf_exempt
 def image(r, image_id):
+    im = get_object_or_404(Image, pk=image_id)
     if r.method == 'GET':
-        im = get_object_or_404(Image, pk=image_id)
         return {'name': im.name,
                 'id': im.pk,
                 'url': im.source,
@@ -86,9 +86,16 @@ def image(r, image_id):
                 'creation_date': defaultfilters.date(im.creation_date),
                 'tags': [t.pk for t in im.tags.all()]}
     elif r.method == 'DELETE':
-        im = get_object_or_404(Image, pk=image_id)
         im.delete()
         return {}
+    elif r.method == 'PUT':
+        put = json.loads(r.body.decode('utf-8'))
+        print('Editing image: {}'.format(put))
+        im.name = put['name']
+        im.desc = put['description']
+        im.source = put['url']
+        im.save()
+        return {'status': 'ok'}
     else:
         raise Http404
 

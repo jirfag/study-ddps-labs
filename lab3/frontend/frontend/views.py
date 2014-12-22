@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from functools import wraps
 import urllib3
 import json
-from .forms import LoginForm
+from .forms import LoginForm, ImageEditForm
 from http import cookies
 from .settings import SESSION_HOST, IMAGES_BACKEND_HOST, TAGS_BACKEND_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
 
@@ -25,28 +25,33 @@ def make_api_request(url, method='GET', fields=None, headers=None):
     fields = fields or {}
     headers = headers or {}
     http = urllib3.PoolManager()
-    print('API request: {} from frontend to {} with fields {} and headers {}'.format(url, method, fields, headers))
+    print('API request: addr="{}", method={}, fields="{}", headers="{}"'.format(url, method, fields, headers))
 
     try:
-        r = http.request(method, url, headers=headers, fields=fields)
+        if method == 'PUT':
+            r = http.urlopen(method, url, header=headers, body=json.dumps(fields))
+        else:
+            r = http.request(method, url, headers=headers, fields=fields)
         if r:
             print('API response: status={}, headers={}, body="{}"'.format(r.status, r.getheaders(), r.data))
         return r
     except Exception as ex:
+        import traceback
+        traceback.print_exc()
         print('exception while doing API request: {}'.format(ex))
         return None
 
-def make_request_to_session(uri, method='GET', fields=None, headers=None):
-    return make_api_request(SESSION_HOST + uri, method=method, fields=fields, headers=headers)
+def make_request_to_session(uri, **kwargs):
+    return make_api_request(SESSION_HOST + uri, **kwargs)
 
-def make_request_to_images_backend(uri, method='GET', fields=None, headers=None):
-    resp = make_api_request(IMAGES_BACKEND_HOST + uri, method=method, fields=fields, headers=headers)
+def make_request_to_images_backend(uri, **kwargs):
+    resp = make_api_request(IMAGES_BACKEND_HOST + uri, **kwargs)
     if resp is None:
         return None
     return json.loads(resp.data.decode('utf-8'))
 
-def make_request_to_tags_backend(uri, method='GET', fields=None, headers=None):
-    resp = make_api_request(TAGS_BACKEND_HOST + uri, method=method, fields=fields, headers=headers)
+def make_request_to_tags_backend(uri, **kwargs):
+    resp = make_api_request(TAGS_BACKEND_HOST + uri, **kwargs)
     if resp is None:
         return None
     return json.loads(resp.data.decode('utf-8'))
@@ -137,6 +142,20 @@ def image(r, image_id):
         all_tags_dict = {tag['id']: tag for tag in all_tags}
         image['tags'] = [all_tags_dict[tag_id] for tag_id in image['tags']]
     return render(r, 'frontend/image.html', {'image': image})
+
 def image_delete(r, image_id):
     make_request_to_images_backend('/image/{}'.format(image_id), method='DELETE')
     return redirect('all_images')
+
+@check_auth
+def image_edit(r, image_id):
+    if r.method == 'GET':
+        image = make_request_to_images_backend('/image/{}'.format(image_id))
+        form = ImageEditForm(image)
+        return render(r, 'frontend/image_edit.html', {'form': form})
+    form = ImageEditForm(r.POST)
+    if not form.is_valid():
+        return render(r, 'frontend/image_edit.html', {'form': form})
+
+    make_request_to_images_backend('/image/{}'.format(image_id), method='PUT', fields=form.cleaned_data)
+    return redirect('/image/{}'.format(image_id))

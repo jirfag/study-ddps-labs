@@ -7,6 +7,7 @@ urlpatterns = patterns('',
     url(r'^logout$', 'frontend.views.logout', name='logout'),
     url(r'^images/all$', 'frontend.views.all_images', name='all_images'),
     url(r'^image/(?P<image_id>\d+)$', 'frontend.views.image', name='image'),
-    url(r'^image_delete/(?P<image_id>\d+)$', 'frontend.views.image_delete', name='image_delete'),
+    url(r'^image/(?P<image_id>\d+)/delete$', 'frontend.views.image_delete', name='image_delete'),
+    url(r'^image/(?P<image_id>\d+)/edit$', 'frontend.views.image_edit', name='image_edit'),
     url(r'^admin/', include(admin.site.urls)),
 )
