@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from functools import wraps
 import urllib3
 import json
-from .forms import LoginForm, ImageEditForm
+from .forms import LoginForm, ImageEditForm, TagEditForm
 from http import cookies
 from .settings import SESSION_HOST, IMAGES_BACKEND_HOST, TAGS_BACKEND_HOST, DEFAULT_AFTER_LOGIN_REDIRECT_URL
 
@@ -163,37 +163,40 @@ def image(r, image_id):
     image = get_image_by_id(image_id)
     return render(r, 'frontend/image.html', {'image': image, 'user': r._user})
 
+@check_auth
+@login_required
 def image_delete(r, image_id):
     make_request_to_images_backend('/image/{}'.format(image_id), method='DELETE')
     return redirect('all_images')
 
 @check_auth
+@login_required
 def image_edit(r, image_id):
     if r.method == 'GET':
         image = get_image_by_id(image_id)
         form = ImageEditForm.from_image(image)
-        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
     form = ImageEditForm(r.POST)
     if not form.is_valid():
-        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
 
     make_request_to_images_backend('/image/{}'.format(image_id), method='PUT', fields=form.cleaned_data)
-    return redirect('/image/{}'.format(image_id))
+    return redirect('image', image_id=image_id)
 
 @check_auth
 @login_required
 def image_create(r):
     if r.method == 'GET':
         form = ImageEditForm()
-        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
     form = ImageEditForm(r.POST)
     if not form.is_valid():
-        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
 
     req = dict(form.cleaned_data)
     req['owner_id'] = r._user.user_id
     image = make_request_to_images_backend('/images', method='POST', fields=req)
-    return redirect('/image/{}'.format(image['id']))
+    return redirect('image', image_id=image['id'])
 
 @check_auth
 def tags(r):
@@ -202,13 +205,8 @@ def tags(r):
     return render(r, 'frontend/tags_list.html', {'tags': resp['tags'], 'page': page, 'pages_count': resp['pages_count'], 'user': r._user})
 
 @check_auth
-@login_required
-def tag_create(r):
-    pass
-
-@check_auth
 def tag(r, tag_id):
-    t = make_request_to_tags_backend('/tags/{}'.format(tag_id))
+    t = make_request_to_tags_backend('/tag/{}'.format(tag_id))
     fields = {
         'filter': json.dumps({'tags__id': t['id']}),
         'sort': '-creation_date',
@@ -216,3 +214,36 @@ def tag(r, tag_id):
     }
     last_images_with_tag = make_request_to_images_backend('/images', fields=fields)['images']
     return render(r, 'frontend/tag.html', {'tag': t, 'images': last_images_with_tag, 'user': r._user})
+
+@check_auth
+@login_required
+def tag_create(r):
+    if r.method == 'GET':
+        form = TagEditForm()
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
+    form = TagEditForm(r.POST)
+    if not form.is_valid():
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
+
+    tag = make_request_to_tags_backend('/tags', method='POST', fields=form.cleaned_data)
+    return redirect('tag', tag_id=tag['id'])
+
+@check_auth
+@login_required
+def tag_edit(r, tag_id):
+    if r.method == 'GET':
+        tag = make_request_to_tags_backend('/tag/{}'.format(tag_id))
+        form = TagEditForm(tag)
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
+    form = TagEditForm(r.POST)
+    if not form.is_valid():
+        return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
+
+    make_request_to_tags_backend('/tag/{}'.format(tag_id), method='PUT', fields=form.cleaned_data)
+    return redirect('tag', tag_id=tag_id)
+
+@check_auth
+@login_required
+def tag_delete(r, tag_id):
+    make_request_to_tags_backend('/tag/{}'.format(tag_id), method='DELETE')
+    return redirect('tags')

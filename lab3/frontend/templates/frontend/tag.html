@@ -4,9 +4,17 @@
 <h1>{{ tag.name }}</h1>
 <p>{{ tag.description }}</p>
 {% if images %}
-<h2>Last images with this tag</h2>
+<h3>Last images with this tag</h3>
 {% endif %}
 {% for image in images %}
     <a href="{% url 'image' image_id=image.id %}"><img src="{{ image.url }}" style="height:200px"></a>
 {% endfor %}
+
+<h3>Actions</h3>
+<form action="{% url 'tag_delete' tag_id=tag.id %}" method="POST">
+    <button class="btn btn-danger" type="submit">Delete tag</button>
+</form>
+<br>
+<a href="{% url 'tag_edit' tag_id=tag.id %}"><button class="btn btn-danger" type="submit">Edit tag</button></a>
+
 {% endblock %}

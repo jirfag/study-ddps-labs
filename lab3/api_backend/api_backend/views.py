@@ -52,7 +52,6 @@ def images(r):
                            } for im in images]
         return c
     elif r.method == 'POST':
-        print('image create')
         try:
             req_img = r.POST #json.loads(r.body.decode('utf-8'))
         except ValueError:
@@ -87,8 +86,9 @@ def tags(r):
         return c
     elif r.method == 'POST':
         try:
-            req_tag = json.loads(r.body.decode('utf-8'))
-        except ValueError:
+            req_tag = r.POST #json.loads(r.body.decode('utf-8'))
+        except ValueError as ex:
+            print('ValueError: {}'.format(ex))
             raise Http404
         tag = Tag.objects.create(name=req_tag['name'], desc=req_tag['description'])
         return {'id': tag.pk}
@@ -123,16 +123,22 @@ def image(r, image_id):
 @jsonify
 @csrf_exempt
 def tag(r, tag_id):
+    t = get_object_or_404(Tag, pk=tag_id)
     if r.method == 'GET':
-        t = get_object_or_404(Tag, pk=tag_id)
         return {'name': t.name,
                 'id': t.pk,
                 'description': t.desc,
                 'creation_date': defaultfilters.date(t.creation_date),
                 'images': [im.pk for im in t.image_set.all()]}
     elif r.method == 'DELETE':
-        t = get_object_or_404(Tag, pk=tag_id)
         t.delete()
         return {}
+    elif r.method == 'PUT':
+        put = json.loads(r.body.decode('utf-8'))
+        print('Editing tag: {}'.format(put))
+        t.name = put['name']
+        t.desc = put['description']
+        t.save()
+        return {'status': 'ok'}
     else:
         raise Http404
