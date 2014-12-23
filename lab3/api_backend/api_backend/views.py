@@ -40,7 +40,9 @@ def images(r):
             images = images.order_by(r.GET['sort'])
         c = {}
         if r.GET.get('limit'):
-            images = images[:int(r.GET['limit'])]
+            limit = int(r.GET['limit'])
+            if limit > 0:
+                images = images[:limit]
         else: # pagination
             c['pages_count'] = math.ceil(images.count() / IMAGES_PER_PAGE)
             images = paginate(r, images, IMAGES_PER_PAGE)
@@ -75,7 +77,9 @@ def tags(r):
             tags = tags.order_by(r.GET['sort'])
         c = {}
         if r.GET.get('limit'):
-            tags = tags[:int(r.GET['limit'])]
+            limit = int(r.GET['limit'])
+            if limit > 0:
+                tags = tags[:limit]
         else: # pagination
             c['pages_count'] = math.ceil(tags.count() / TAGS_PER_PAGE)
             tags = paginate(r, tags, TAGS_PER_PAGE)
@@ -115,6 +119,7 @@ def image(r, image_id):
         im.name = put['name']
         im.desc = put['description']
         im.source = put['url']
+        im.tags = put['tags']
         im.save()
         return {'status': 'ok'}
     else:

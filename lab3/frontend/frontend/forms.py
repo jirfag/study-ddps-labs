@@ -17,7 +17,7 @@ class ImageEditForm(forms.Form):
     name = forms.CharField(label='Name', max_length=140)
     description = forms.CharField(label='Description', max_length=512)
     url = forms.URLField(label='Source')
-    tags = forms.CharField(label='Tags', max_length=4096)
+    tags = forms.CharField(label='Tags', max_length=4096, required=False)
 
     @classmethod
     def from_image(cls, image):

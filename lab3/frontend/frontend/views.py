@@ -29,7 +29,7 @@ def make_api_request(url, method='GET', fields=None, headers=None):
 
     try:
         if method == 'PUT':
-            r = http.urlopen(method, url, header=headers, body=json.dumps(fields))
+            r = http.urlopen(method, url, headers=headers, body=json.dumps(fields))
         else:
             r = http.request(method, url, headers=headers, fields=fields)
         if r:
@@ -130,7 +130,7 @@ def logout(r):
 def all_images(r):
     page = int(r.GET.get('page', '1'))
     resp = make_request_to_images_backend('/images', fields={'page': page})
-    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page, 'user': r._user}
+    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page, 'user': r._user, 'page_name': 'all_images'}
     print('context is {}'.format(c))
     return render(r, 'frontend/images_list.html', c)
 
@@ -145,7 +145,7 @@ def my_images(r):
                 })
              }
     resp = make_request_to_images_backend('/images', fields=fields)
-    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page, 'user': r._user}
+    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page, 'user': r._user, 'page_name': 'my_images'}
     print('context is {}'.format(c))
     return render(r, 'frontend/images_list.html', c)
 
@@ -180,7 +180,19 @@ def image_edit(r, image_id):
     if not form.is_valid():
         return render(r, 'frontend/form_edit.html', {'form': form, 'user': r._user})
 
-    make_request_to_images_backend('/image/{}'.format(image_id), method='PUT', fields=form.cleaned_data)
+    req = dict(form.cleaned_data)
+    needed_tag_names = req['tags'].split(',')
+    req['tags'] = []
+    existing_tags = make_request_to_tags_backend('/tags', fields={'filter': json.dumps({'name__in': needed_tag_names})})['tags']
+    existing_tags_dict = {t['name']: t for t in existing_tags}
+    for tname in needed_tag_names:
+        if tname in existing_tags_dict:
+            tag = existing_tags_dict[tname]
+        else:
+            tag = make_request_to_tags_backend('/tags', method='POST', fields={'name': tname, 'description': ''})
+        req['tags'].append(tag['id'])
+
+    make_request_to_images_backend('/image/{}'.format(image_id), method='PUT', fields=req)
     return redirect('image', image_id=image_id)
 
 @check_auth

@@ -1,6 +1,7 @@
 from api_backend.models import Image, Tag
 
-user_id = 5
+user_id1 = 12
+user_id2 = 13
 
 Tag.objects.all().delete()
 Tag.objects.create(name='Cat', desc='Cat (animal)')
@@ -17,7 +18,8 @@ Tag.objects.create(name='Nature', desc='Photos with the nature')
 
 Image.objects.all().delete()
 def add_img(name, desc, source, tag_names):
-    img = Image.objects.create(name=name, desc=desc, source=source, owner_id=user_id)
+    import random
+    img = Image.objects.create(name=name, desc=desc, source=source, owner_id=random.choice((user_id1, user_id2)))
     for tag_name in tag_names:
         img.tags.add(Tag.objects.get(name=tag_name))
 
