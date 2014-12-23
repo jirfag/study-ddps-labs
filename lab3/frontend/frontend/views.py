@@ -152,7 +152,7 @@ def my_images(r):
 def get_image_by_id(image_id):
     image = make_request_to_images_backend('/image/{}'.format(image_id))
     if image['tags']:
-        fields = {'filter': json.dumps({'pk__in': image['tags']})}
+        fields = {'filter': json.dumps({'id__in': image['tags']})}
         all_tags = make_request_to_tags_backend('/tags', fields=fields)['tags']
         all_tags_dict = {tag['id']: tag for tag in all_tags}
         image['tags'] = [all_tags_dict[tag_id] for tag_id in image['tags']]
@@ -209,4 +209,10 @@ def tag_create(r):
 @check_auth
 def tag(r, tag_id):
     t = make_request_to_tags_backend('/tags/{}'.format(tag_id))
-    return render(r, 'frontend/tag.html', {'tag': t, 'user': r._user})
+    fields = {
+        'filter': json.dumps({'tags__id': t['id']}),
+        'sort': '-creation_date',
+        'limit': 3
+    }
+    last_images_with_tag = make_request_to_images_backend('/images', fields=fields)['images']
+    return render(r, 'frontend/tag.html', {'tag': t, 'images': last_images_with_tag, 'user': r._user})

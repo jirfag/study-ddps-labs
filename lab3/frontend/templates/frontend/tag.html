@@ -3,4 +3,10 @@
 {% block content %}
 <h1>{{ tag.name }}</h1>
 <p>{{ tag.description }}</p>
+{% if images %}
+<h2>Last images with this tag</h2>
+{% endif %}
+{% for image in images %}
+    <a href="{% url 'image' image_id=image.id %}"><img src="{{ image.url }}" style="height:200px"></a>
+{% endfor %}
 {% endblock %}
