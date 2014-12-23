@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<hr>
+  <a href="{% url 'tag_create' %}"><button type="button" class="btn btn-success">Create tag</button></a>
+<hr>
+    <table class="table table-bordered">
+      <thead><th>Name</th><th>Description</th></thead>
+      <tbody>
+    {% for tag in tags %}
+      <tr>
+        <td><a href="{% url 'tag' tag_id=tag.id %}" target="_blank">{{ tag.name }}</a>
+        <td>{{ tag.description }}</td>
+      </tr>
+    {% endfor %}
+      </tbody>
+    </table>
+
+<nav>
+  <ul class="pager">
+{% if page > 1 %}
+    <li><a href="{% url 'tags' %}?page={{ page|add:"-1" }}">Previous</a></li>
+{% endif %}
+{% if page != pages_count %}
+    <li><a href="{% url 'tags' %}?page={{ page|add:"1" }}">Next</a></li>
+{% endif %}
+  </ul>
+</nav>
+{% endblock %}

@@ -98,7 +98,7 @@ def morsel_to_django_cookie(m):
 def login(r):
     form = LoginForm(r.POST or None)
     if r.method == 'GET':
-        return render(r, 'frontend/login.html', {'form': form})
+        return render(r, 'frontend/login.html', {'form': form, 'user': r._user})
     def validate_login(data):
         resp = make_request_to_session('/authorize', method='POST', fields=data)
         if resp is None:
@@ -110,7 +110,7 @@ def login(r):
         return resp
     form._login_validator = validate_login
     if not form.is_valid():
-        return render(r, 'frontend/login.html', {'form': form})
+        return render(r, 'frontend/login.html', {'form': form, 'user': r._user})
 
     redir_url = r.GET.get('next', DEFAULT_AFTER_LOGIN_REDIRECT_URL)
     print('redirecting to {} after successfull login'.format(redir_url))
@@ -123,25 +123,45 @@ def login(r):
     return resp
 
 def logout(r):
-    make_request_to_session('/session/delete', method='DELETE')
+    make_request_to_session('/session/delete', method='DELETE', headers={'Cookie': r.META.get('HTTP_COOKIE', '')})
     return redirect('home')
 
 @check_auth
 def all_images(r):
     page = int(r.GET.get('page', '1'))
     resp = make_request_to_images_backend('/images', fields={'page': page})
-    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page}
+    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page, 'user': r._user}
     print('context is {}'.format(c))
     return render(r, 'frontend/images_list.html', c)
 
 @check_auth
-def image(r, image_id):
+@login_required
+def my_images(r):
+    page = int(r.GET.get('page', '1'))
+    fields = {
+                'page': page,
+                'filter': json.dumps({
+                    'owner_id': r._user.user_id
+                })
+             }
+    resp = make_request_to_images_backend('/images', fields=fields)
+    c = {'images': resp['images'], 'pages_count': resp['pages_count'], 'page': page, 'user': r._user}
+    print('context is {}'.format(c))
+    return render(r, 'frontend/images_list.html', c)
+
+def get_image_by_id(image_id):
     image = make_request_to_images_backend('/image/{}'.format(image_id))
     if image['tags']:
-        all_tags = make_request_to_tags_backend('/tags', fields={'all': 1})['tags']
+        fields = {'filter': json.dumps({'pk__in': image['tags']})}
+        all_tags = make_request_to_tags_backend('/tags', fields=fields)['tags']
         all_tags_dict = {tag['id']: tag for tag in all_tags}
         image['tags'] = [all_tags_dict[tag_id] for tag_id in image['tags']]
-    return render(r, 'frontend/image.html', {'image': image})
+    return image
+
+@check_auth
+def image(r, image_id):
+    image = get_image_by_id(image_id)
+    return render(r, 'frontend/image.html', {'image': image, 'user': r._user})
 
 def image_delete(r, image_id):
     make_request_to_images_backend('/image/{}'.format(image_id), method='DELETE')
@@ -150,12 +170,43 @@ def image_delete(r, image_id):
 @check_auth
 def image_edit(r, image_id):
     if r.method == 'GET':
-        image = make_request_to_images_backend('/image/{}'.format(image_id))
-        form = ImageEditForm(image)
-        return render(r, 'frontend/image_edit.html', {'form': form})
+        image = get_image_by_id(image_id)
+        form = ImageEditForm.from_image(image)
+        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
     form = ImageEditForm(r.POST)
     if not form.is_valid():
-        return render(r, 'frontend/image_edit.html', {'form': form})
+        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
 
     make_request_to_images_backend('/image/{}'.format(image_id), method='PUT', fields=form.cleaned_data)
     return redirect('/image/{}'.format(image_id))
+
+@check_auth
+@login_required
+def image_create(r):
+    if r.method == 'GET':
+        form = ImageEditForm()
+        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
+    form = ImageEditForm(r.POST)
+    if not form.is_valid():
+        return render(r, 'frontend/image_edit.html', {'form': form, 'user': r._user})
+
+    req = dict(form.cleaned_data)
+    req['owner_id'] = r._user.user_id
+    image = make_request_to_images_backend('/images', method='POST', fields=req)
+    return redirect('/image/{}'.format(image['id']))
+
+@check_auth
+def tags(r):
+    page = int(r.GET.get('page', '1'))
+    resp = make_request_to_tags_backend('/tags', fields={'page': page})
+    return render(r, 'frontend/tags_list.html', {'tags': resp['tags'], 'page': page, 'pages_count': resp['pages_count'], 'user': r._user})
+
+@check_auth
+@login_required
+def tag_create(r):
+    pass
+
+@check_auth
+def tag(r, tag_id):
+    t = make_request_to_tags_backend('/tags/{}'.format(tag_id))
+    return render(r, 'frontend/tag.html', {'tag': t, 'user': r._user})

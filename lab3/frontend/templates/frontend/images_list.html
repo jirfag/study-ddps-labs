@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <table class="table table-striped">
+<hr>
+  <a href="{% url 'image_create' %}"><button type="button" class="btn btn-success">Create image</button></a>
+<hr>
+    <table class="table table-bordered">
       <thead><th>Image</th><th>Name</th></thead>
       <tbody>
     {% for image in images %}

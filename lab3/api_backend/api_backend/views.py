@@ -36,34 +36,41 @@ def paginate(r, objects, objects_per_page):
 @csrf_exempt
 def images(r):
     if r.method == 'GET':
-        print('images GET')
+        f = r.GET.get('filter')
+        images = Image.objects.filter(**json.loads(f)) if f else Image.objects.all()
         return {'images': [{'name': im.name,
                             'id': im.pk,
                             'url': im.source
-                           } for im in paginate(r, Image.objects.all(), IMAGES_PER_PAGE)],
-                'pages_count': math.ceil(Image.objects.count() / IMAGES_PER_PAGE)
+                           } for im in paginate(r, images, IMAGES_PER_PAGE)],
+                'pages_count': math.ceil(images.count() / IMAGES_PER_PAGE)
                }
     elif r.method == 'POST':
+        print('image create')
         try:
-            req_img = json.loads(r.body.decode('utf-8'))
+            req_img = r.POST #json.loads(r.body.decode('utf-8'))
         except ValueError:
             raise Http404
-        tags = [get_object_or_404(Tag, pk=tag_id) for tag_id in req_img['tags']]
-        img = Image.objects.create(name=req_img['name'], desc=req_img['description'], source=req_img['url'])
-        img.tags = tags
+#        tags = [get_object_or_404(Tag, pk=tag_id) for tag_id in req_img['tags']]
+        img = Image.objects.create(name=req_img['name'], desc=req_img['description'], source=req_img['url'], owner_id=req_img['owner_id'])
+#        img.tags = tags
         img.save()
         return {'id': img.pk}
     else:
+        print('unknown method')
         raise Http404
 
 @jsonify
 @csrf_exempt
 def tags(r):
     if r.method == 'GET':
+        f = r.GET.get('filter')
+        tags = Tag.objects.filter(**json.loads(f)) if f else Tag.objects.all()
         return {'tags': [{'name': t.name,
                           'id': t.pk,
                           'description': t.desc
-                         } for t in paginate(r, Tag.objects.all(), TAGS_PER_PAGE)]}
+                         } for t in paginate(r, tags, TAGS_PER_PAGE)],
+                'pages_count': math.ceil(tags.count() / TAGS_PER_PAGE)
+               }
     elif r.method == 'POST':
         try:
             req_tag = json.loads(r.body.decode('utf-8'))

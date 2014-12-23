@@ -26,8 +26,10 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
         <li><a href="{% url 'all_images' %}">All Images</a></li>
-        <li><a href="#">My Images</a></li>
-        <li><a href="#">All Tags</a></li>
+        {% if user.is_authenticated %}
+          <li><a href="{% url 'my_images' %}">My Images</a></li>
+        {% endif %}
+        <li><a href="{% url 'tags' %}">All Tags</a></li>
       </ul>
 
       <ul class="nav navbar-nav navbar-right">

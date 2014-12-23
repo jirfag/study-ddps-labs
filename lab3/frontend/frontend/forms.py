@@ -17,3 +17,10 @@ class ImageEditForm(forms.Form):
     name = forms.CharField(label='Name', max_length=140)
     description = forms.CharField(label='Description', max_length=512)
     url = forms.URLField(label='Source')
+    tags = forms.CharField(label='Tags', max_length=4096) 
+
+    @classmethod
+    def from_image(cls, image):
+        new_image = dict(image)
+        new_image['tags'] = ','.join([t['name'] for t in image['tags']])
+        return cls(new_image)

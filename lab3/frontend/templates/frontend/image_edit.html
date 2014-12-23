@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    {% load bootstrap3 %}
+    {% bootstrap_form form %}
+    <button type="submit" class="btn btn-default">Edit</button>
+</form>
+<hr>
+<img src="{{ form.cleaned_data.url }}" style="height:100px">
+{% endblock %}
