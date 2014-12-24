@@ -54,14 +54,12 @@ def images(r):
                            } for im in images]
         return c
     elif r.method == 'POST':
-        try:
-            req_img = r.POST #json.loads(r.body.decode('utf-8'))
-        except ValueError:
-            raise Http404
+        req_img = r.POST #json.loads(r.body.decode('utf-8'))
 #        tags = [get_object_or_404(Tag, pk=tag_id) for tag_id in req_img['tags']]
         img = Image.objects.create(name=req_img['name'], desc=req_img['description'], source=req_img['url'], owner_id=req_img['owner_id'])
-#        img.tags = tags
+        img.tags = json.loads(req_img['tags'])
         img.save()
+        print('successfully created image: {} - {}'.format(img.pk, req_img))
         return {'id': img.pk}
     else:
         print('unknown method')

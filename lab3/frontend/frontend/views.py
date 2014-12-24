@@ -207,8 +207,21 @@ def image_create(r):
 
     req = dict(form.cleaned_data)
     req['owner_id'] = r._user.user_id
-    image = make_request_to_images_backend('/images', method='POST', fields=req)
-    return redirect('image', image_id=image['id'])
+
+    needed_tag_names = req['tags'].split(',')
+    req['tags'] = []
+    existing_tags = make_request_to_tags_backend('/tags', fields={'filter': json.dumps({'name__in': needed_tag_names})})['tags']
+    existing_tags_dict = {t['name']: t for t in existing_tags}
+    for tname in needed_tag_names:
+        if tname in existing_tags_dict:
+            tag = existing_tags_dict[tname]
+        else:
+            tag = make_request_to_tags_backend('/tags', method='POST', fields={'name': tname, 'description': ''})
+        req['tags'].append(tag['id'])
+    req['tags'] = json.dumps(req['tags'])
+    img = make_request_to_images_backend('/images', method='POST', fields=req)
+    print('create image {} from req {}'.format(img, req))
+    return redirect('image', image_id=img['id'])
 
 @check_auth
 def tags(r):
